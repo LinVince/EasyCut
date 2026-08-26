@@ -2,7 +2,7 @@
 
 A Windows 10 desktop video editing app built with **PySide6 (Qt)**, **ffmpeg**, **OpenCV**, **faster-whisper** and **rembg**.
 
-Features AI background removal, silence cutting, speech-to-text subtitles, chroma keying, and a timeline editor where every tool's output drops back in for further editing.
+Features AI background removal, face retouching, silence cutting, speech-to-text subtitles, chroma keying, and a timeline editor where every tool's output drops back in for further editing.
 
 ---
 
@@ -39,8 +39,17 @@ First launch downloads AI models automatically (requires internet, only once):
 
 The window has **two panels**:
 
-- **Left (tabs):** seven tabs — one per tool plus the editor.
+- **Left (tabs):** eight tabs — one per tool plus the editor.
 - **Right (preview):** a built-in media player with a seek slider, volume control, and a **Send to...** button. You can also load the preview with any video from the tabs.
+
+## Face Retouch
+
+Detects frontal faces in each video frame and applies edge-preserving skin smoothing inside a soft face mask. The original audio is preserved and the result is sent to the Editor.
+
+| Control | What it does |
+|---|---|
+| **Smoothing strength** | Controls how strongly skin texture is softened. Zero leaves the video unchanged. |
+| **Face detection** | Trades detection coverage for processing speed. Use **More faces / slower** for smaller or less frontal faces. |
 
 ---
 

@@ -314,6 +314,63 @@ class BackgroundTab(TabPanel):
         self.win.send_to_editor(self, result, "nobg")
 
 
+class RetouchTab(TabPanel):
+    def __init__(self, win):
+        self.input = FilePickerRow("Video", preview=True)
+        self.output = OutputRow()
+        self.strength = QSlider(Qt.Orientation.Horizontal)
+        self.strength.setRange(0, 100)
+        self.strength.setValue(45)
+        self.strength_lbl = QLabel("45%")
+        self.strength.valueChanged.connect(lambda v: self.strength_lbl.setText(f"{v}%"))
+        self.scale = QComboBox()
+        for value, label in [(1.05, "More faces / slower"), (1.1, "Balanced"), (1.2, "Faster")]:
+            self.scale.addItem(label, value)
+        self.scale.setCurrentIndex(1)
+        super().__init__(win, "Face Retouch")
+
+    def controls_layout(self) -> QVBoxLayout:
+        lay = QVBoxLayout()
+        lay.addWidget(self.input)
+        lay.addWidget(self.output)
+        group = QGroupBox("Retouch settings")
+        layout = QVBoxLayout(group)
+        strength = QHBoxLayout()
+        strength.addWidget(QLabel("Smoothing strength"))
+        strength.addWidget(self.strength, 1)
+        strength.addWidget(self.strength_lbl)
+        layout.addLayout(strength)
+        detection = QHBoxLayout()
+        detection.addWidget(QLabel("Face detection"))
+        detection.addWidget(self.scale, 1)
+        layout.addLayout(detection)
+        tip = QLabel("Detects frontal faces and softly smooths skin inside each face region. "
+                     "Eyes, hair, and the area outside faces are preserved. Higher strength gives a "
+                     "more noticeable result; use a lower value for a natural finish.")
+        tip.setObjectName("hint")
+        tip.setWordWrap(True)
+        layout.addWidget(tip)
+        lay.addWidget(group)
+        lay.addStretch(1)
+        return lay
+
+    def build_job(self, progress_cb, cancel):
+        from ..retouch import retouch_video
+
+        src = self.input.path()
+        if not src:
+            raise ValueError("select a video first")
+        self.output.set_default(src, "_retouched")
+        return lambda: retouch_video(
+            src, self.output.path(), strength=self.strength.value(),
+            scale_factor=self.scale.currentData(),
+            progress_cb=progress_cb, cancel=cancel)
+
+    def _on_done(self, result: str) -> None:
+        super()._on_done(result)
+        self.win.send_to_editor(self, result, "retouched")
+
+
 class SubtitleTab(TabPanel):
     def __init__(self, win):
         self.input = FilePickerRow("Video/Audio", filter="Media (*.mp4 *.mov *.mkv *.avi *.webm *.mp3 *.wav *.m4a);;All files (*)", preview=True)
@@ -1407,6 +1464,7 @@ class MainWindow(QMainWindow):
         self.editor = EditorTab(self)
         self.silence = SilenceTab(self)
         self.background = BackgroundTab(self)
+        self.retouch = RetouchTab(self)
         self.subtitles = SubtitleTab(self)
         self.subedit = SubtitleEditTab(self)
         self.chroma = ChromaKeyTab(self)
@@ -1415,6 +1473,7 @@ class MainWindow(QMainWindow):
             (self.editor, "Editor"),
             (self.silence, "Cut Silence"),
             (self.background, "Remove Background"),
+            (self.retouch, "Face Retouch"),
             (self.subtitles, "Subtitles"),
             (self.subedit, "Subtitle Editor"),
             (self.chroma, "Chroma Key"),
@@ -1456,7 +1515,7 @@ class MainWindow(QMainWindow):
         try:
             if kind == "keep" and hasattr(tab, "_last_keep") and tab._last_keep:
                 self.editor.load_from_kept(tab.input.path(), tab._last_keep, label="keep")
-            elif kind in ("nobg", "keyed", "subs"):
+            elif kind in ("nobg", "keyed", "retouched", "subs"):
                 self.editor.add_source(result, kind)
             else:
                 return
