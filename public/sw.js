@@ -1,8 +1,9 @@
-const CACHE = 'twstocks-v17';
+const CACHE = 'twstocks-v18';
 const SHELL = [
   './',
   'index.html',
   'styles.css',
+  'config.js',
   'script.js',
   'manifest.json',
   'icons/icon-192.png',

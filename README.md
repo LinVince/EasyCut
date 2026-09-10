@@ -1,38 +1,53 @@
 # TW Stocks — PWA
 
-A **fully static** Progressive Web App for tracking Taiwan stocks with live prices, 120-day moving averages, 5-day OHLCV history, dividends, and 52-week range — all fetched directly from Yahoo Finance in the browser (no backend, no proxy).
+A **static** Progressive Web App for tracking Taiwan stocks with live prices, MA20/40/60/120/200, 5-day OHLCV history, dividends, and 52-week range. Yahoo Finance sends no CORS headers, so live data is relayed through a small proxy:
 
-Favorites are stored locally via **IndexedDB** and can be exported/imported as JSON backup. Installable on iPhone Home Screen via **Add to Home Screen**.
+- **Local dev** — the bundled Node/Express server proxies at `/api/chart`
+- **Deployed to GitHub Pages** — a free **Cloudflare Worker** relays the same requests
+
+Favorites, watchlist, categories, and export/import are stored locally via **IndexedDB**. Installable on iPhone Home Screen via **Add to Home Screen**.
 
 ## Features
 
-- **Live prices** — Yahoo Finance `chart` API (browser direct)
-- **TW stock code + Traditional Chinese names** — built-in mapping for 170+ stocks
+- **Live prices** — Yahoo Finance `chart` API via proxy (Node or Cloudflare Worker)
+- **Categories** — built-in AI/semiconductor catalog, custom categories, filter bar
+- **Moving averages** — MA20/40/60/120/200 computed from daily closes
+- **Near-MA screener** — find watchlist stocks within 0.5/1/2% of any MA
 - **52-week range bar** — visual position within the year
-- **120-day MA** — computed from daily close history
 - **5-day OHLCV table** — last 5 trading days
 - **Dividend history** — recent payments from Yahoo events
 - **Favorites** — star any stock, saved locally (IndexedDB)
-- **Export / Import** — JSON backup of favorites
+- **Export / Import** — JSON backup of favorites + watchlist + categories
+- **Yahoo link** — ↗ icon on each card opens the stock's Yahoo Finance page
 - **Offline support** — app shell cached by service worker
 - **PWA installable** — Add to Home Screen (iOS standalone)
 
-## Deploy as Static
+## Deploy (recommended: static + Cloudflare Worker)
 
-Just serve the `public/` directory from any static host:
+1. **Create the Worker** — in `worker/`:
+   ```bash
+   cd worker
+   npx wrangler login
+   npx wrangler deploy
+   ```
+   Note the worker URL, e.g. `https://easycut-data-proxy.<account>.workers.dev`.
 
-| Platform | How |
-|---|---|
-| GitHub Pages | Push `public/` contents to repo → Settings → Pages |
-| Netlify / Cloudflare Pages | Drag-drop `public/` in dashboard |
-| Any web server | Copy `public/` to web root |
+2. **Point the app at it** — in `public/config.js`:
+   ```js
+   window.YF_PROXY = 'https://easycut-data-proxy.<account>.workers.dev';
+   ```
+
+3. **Deploy the frontend** — push to GitHub and enable Pages from Actions,
+   or drop `public/` onto Netlify / Cloudflare Pages.
+
+The `.github/workflows/deploy.yml` workflow auto-publishes `public/` to GitHub Pages on every push to `main`.
 
 ## Local Preview
 
 ```bash
 npm install
 npm start
-# → http://localhost:5000
+# → http://localhost:5000  (proxy served by Express at /api/chart)
 ```
 
 ## iPhone Install
@@ -48,20 +63,27 @@ The app now launches standalone from your Home Screen like a native app.
 
 ```
 public/
-├── index.html
+├── index.html      # App markup + modal
 ├── styles.css
-├── script.js      # Yahoo Finance fetch + IndexedDB favorites + PWA init
-├── sw.js          # Service worker (caches app shell)
-├── manifest.json  # PWA manifest
+├── config.js       # window.YF_PROXY → static-host data proxy URL ('' = local)
+├── script.js       # fetch, IndexedDB, categories, MAs, screener, PWA init
+├── sw.js           # Service worker (network-first, caches app shell)
+├── manifest.json   # PWA manifest
 └── icons/
     ├── icon-192.png
     ├── icon-512.png
     └── apple-touch-icon.png
+
+worker/
+├── index.js        # Cloudflare Worker — Yahoo chart proxy (.TW → .TWO)
+└── wrangler.toml   # Worker config (name: easycut-data-proxy)
+
+server.js           # Local dev server + same proxy at /api/chart
 ```
 
 ## Data Notes
 
-Data comes from Yahoo Finance's public `chart` API, which works in-browser when `fetch()` sends standard `Sec-Fetch-*` headers. No CORS proxy or backend needed.
+Yahoo Finance's public `chart` API sends **no `Access-Control-Allow-Origin`** header, so a browser cannot fetch it directly. The Node server (local) or the Cloudflare Worker (deployed) relays requests for us, trying the `.TW` suffix first and falling back to `.TWO` for OTC/TPEX stocks.
 
 **Unavailable without a Yahoo crumb:** P/E ratio, EPS, market cap, beta. These fields show "—".
 

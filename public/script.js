@@ -1,6 +1,6 @@
 // ── Constants ───────────────────────────────────────────────────────
 // Proxy through our own server (handles Yahoo CORS)
-const YF_CHART = '/api/chart';
+const YF_CHART = (window.YF_PROXY ? window.YF_PROXY.replace(/\/+$/, '') : '') + '/api/chart';
 const DEFAULT_RANGE = '1y';
 const DEFAULT_INTERVAL = '1d';
 
