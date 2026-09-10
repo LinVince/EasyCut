@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time Taiwanese stock tracker with 120-day moving averages">
+    <title>Taiwanese Stock Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇹🇼 Taiwanese Stock Tracker</h1>
+            <p>Real-time prices & 120-day moving averages</p>
+        </header>
+
+        <section class="input-section">
+            <div class="input-group">
+                <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., 2330)" maxlength="6">
+                <button onclick="addStock()">Add Stock</button>
+            </div>
+            <button class="refresh-btn" onclick="refreshAllStocks()">🔄 Refresh</button>
+        </section>
+
+        <section class="stats-section">
+            <div class="stat-card">
+                <span class="stat-label">Tracked Stocks</span>
+                <span class="stat-value" id="stockCount">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Last Updated</span>
+                <span class="stat-value" id="lastUpdate">--:--</span>
+            </div>
+        </section>
+
+        <section class="stocks-section">
+            <h2>Stock Portfolio</h2>
+            <div id="stocksList" class="stocks-list">
+                <p class="empty-state">No stocks tracked yet. Add one to get started!</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
