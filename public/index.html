@@ -1,44 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Real-time Taiwanese stock tracker with 120-day moving averages">
-    <title>Taiwanese Stock Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TW Stocks">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="description" content="TW stock tracker with live prices and 120-day moving averages">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>TW Stocks</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🇹🇼 Taiwanese Stock Tracker</h1>
-            <p>Real-time prices & 120-day moving averages</p>
-        </header>
+    <div class="safe-area">
+        <div class="container">
+            <header>
+                <h1>TW Stocks</h1>
+                <p>Live prices, MA20/40/60/120/200 & 5-day history</p>
+            </header>
 
-        <section class="input-section">
-            <div class="input-group">
-                <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., 2330)" maxlength="6">
-                <button onclick="addStock()">Add Stock</button>
-            </div>
-            <button class="refresh-btn" onclick="refreshAllStocks()">🔄 Refresh</button>
-        </section>
+            <section class="input-section">
+                <div class="input-group">
+                    <input type="text" id="stockSymbol" placeholder="Symbol (e.g. 2330)" maxlength="6" inputmode="numeric" autocomplete="off">
+                    <button id="addBtn" onclick="addStock()">Add</button>
+                </div>
+                <button class="refresh-btn" onclick="refreshAll()">Refresh</button>
+            </section>
 
-        <section class="stats-section">
-            <div class="stat-card">
-                <span class="stat-label">Tracked Stocks</span>
-                <span class="stat-value" id="stockCount">0</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Last Updated</span>
-                <span class="stat-value" id="lastUpdate">--:--</span>
-            </div>
-        </section>
+            <section class="stats-section">
+                <div class="stat-card"><span class="stat-label">Watchlist</span><span class="stat-value" id="stockCount">0</span></div>
+                <div class="stat-card"><span class="stat-label">Favorites</span><span class="stat-value" id="favCount">0</span></div>
+                <div class="stat-card"><span class="stat-label">Updated</span><span class="stat-value" id="lastUpdate">--:--</span></div>
+            </section>
 
-        <section class="stocks-section">
-            <h2>Stock Portfolio</h2>
-            <div id="stocksList" class="stocks-list">
-                <p class="empty-state">No stocks tracked yet. Add one to get started!</p>
+            <section class="ma-finder-section">
+                <div class="section-header">
+                    <h2>Near Moving Average</h2>
+                    <div class="threshold-chips">
+                        <button class="th-chip active" data-th="0.5" onclick="setThreshold(0.5)">0.5%</button>
+                        <button class="th-chip" data-th="1" onclick="setThreshold(1)">1%</button>
+                        <button class="th-chip" data-th="2" onclick="setThreshold(2)">2%</button>
+                    </div>
+                </div>
+                <div id="maFinder" class="ma-finder">
+                    <p class="empty-state">Loading price data...</p>
+                </div>
+            </section>
+
+            <section class="favorites-section">
+                <div class="section-header">
+                    <h2>Favorites</h2>
+                    <div class="backup-btns">
+                        <button class="backup-btn" onclick="exportBackup()">Export</button>
+                        <label for="importFile" class="backup-btn">Import</label>
+                        <input type="file" id="importFile" accept=".json" onchange="importBackup(event)" hidden>
+                    </div>
+                </div>
+                <div id="favoritesList" class="stocks-list">
+                    <p class="empty-state">No favorites yet.</p>
+                </div>
+            </section>
+
+<section class="stocks-section">
+                <h2>Watchlist</h2>
+                <div id="catFilter" class="cat-filter"></div>
+                <div id="stocksList" class="stocks-list">
+                    <p class="empty-state">Loading stock data...</p>
+                </div>
+            </section>
+
+            <footer class="note">
+                <p>Data: Yahoo Finance via <code>chart</code> API (browser direct, no proxy).</p>
+                <p class="dim">Fundamentals (P/E, EPS, market cap) unavailable without Yahoo crumb.</p>
+            </footer>
+        </div>
+    </div>
+
+    <div id="catModal" class="modal hidden" onclick="if(event.target===this)closeCatPicker()">
+        <div class="modal-sheet">
+            <div class="modal-title" id="catModalTitle">Categorize</div>
+            <div class="modal-chips" id="catModalChips"></div>
+            <div id="catAddRow" class="modal-add hidden">
+                <input type="text" id="catNewInput" placeholder="New category…" maxlength="20" autocomplete="off" onkeydown="if(event.key==='Enter')pickNewCategory()">
+                <button class="modal-add-btn" onclick="pickNewCategory()">Add</button>
             </div>
-        </section>
+            <button class="modal-done" onclick="closeCatPicker()">Done</button>
+        </div>
     </div>
 
     <script src="script.js"></script>

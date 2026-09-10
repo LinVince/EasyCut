@@ -1,69 +1,44 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
-app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Store stock data in memory
-const stockData = {};
+// Yahoo Finance proxy — handles CORS and rate-limiting for the browser
+app.get('/api/chart/:symbol', async (req, res) => {
+  const { symbol } = req.params;
+  const { range = '1y', interval = '1d' } = req.query;
+  const enc = encodeURIComponent(symbol);
+  // Listed stocks use .TW, OTC (TPEX) stocks use .TWO
+  const candidates = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${enc}.TW?range=${range}&interval=${interval}&events=div%2Csplits`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${enc}.TWO?range=${range}&interval=${interval}&events=div%2Csplits`,
+  ];
+  const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36' };
 
-// API Routes - Skeleton
-app.get('/api/stocks', (req, res) => {
-  res.json(Object.values(stockData));
-});
-
-app.get('/api/stocks/:symbol', (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  if (stockData[symbol]) {
-    res.json(stockData[symbol]);
-  } else {
-    res.status(404).json({ error: 'Stock not found' });
+  for (const url of candidates) {
+    try {
+      const r = await fetch(url, { headers });
+      if (r.status === 404) continue;
+      if (!r.ok) return res.status(r.status).json({ error: 'Yahoo Finance error' });
+      const data = await r.json();
+      res.set('Cache-Control', 'public, max-age=30');
+      return res.json(data);
+    } catch (err) {
+      return res.status(502).json({ error: err.message });
+    }
   }
+  res.status(404).json({ error: 'Symbol not found on TWSE/TPEX' });
 });
 
-app.post('/api/stocks/add/:symbol', (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  stockData[symbol] = {
-    symbol: symbol,
-    price: 0,
-    date: new Date().toISOString(),
-    volume: 0,
-    open: 0,
-    high: 0,
-    low: 0,
-    ma120: 'N/A',
-    tracked_since: new Date().toISOString(),
-    historical_prices: []
-  };
-  res.json({ success: true, data: stockData[symbol] });
-});
-
-app.delete('/api/stocks/:symbol', (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  if (stockData[symbol]) {
-    delete stockData[symbol];
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Stock not found' });
-  }
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running' });
-});
-
-// Serve index.html for all other routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`🇹🇼 Taiwanese Stock Tracker running on http://localhost:${PORT}`);
+  console.log(`TW Stocks running on http://localhost:${PORT}`);
 });
