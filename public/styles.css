@@ -81,6 +81,8 @@ button:active{transform:scale(0.97)}
 .card-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .fav-btn{background:none;border:none;padding:4px;font-size:1.4rem;line-height:1;color:#cbd5e1;cursor:pointer;min-width:auto;min-height:auto;transition:color 0.15s}
 .fav-btn.active{color:var(--fav)}
+.ext-link{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);color:var(--muted);font-size:1rem;text-decoration:none;transition:all 0.15s;flex-shrink:0}
+.ext-link:hover{color:var(--primary);border-color:var(--primary);background:#fff}
 .remove-btn{background:none;color:var(--muted);border:1.5px solid var(--border);padding:4px 10px;font-size:0.8rem;min-width:auto;min-height:auto;border-radius:8px}
 .remove-btn:hover{color:var(--down);border-color:var(--down)}
 .remove-fav-btn{background:none;color:var(--down);border:1.5px solid var(--down);padding:4px 10px;font-size:0.8rem;min-width:auto;min-height:auto;border-radius:8px}

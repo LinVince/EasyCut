@@ -245,6 +245,7 @@ function parseStockData(symbol, yf) {
   const info = STOCK_INFO[symbol] || {};
   return {
     symbol,
+    yahooSym: meta.symbol || symbol,
     name_en: meta.shortName || meta.longName || '',
     name_zh: info.name_zh || TW_NAMES_ZH[symbol] || meta.shortName || symbol,
     industry: info.industry,
@@ -269,6 +270,15 @@ function parseStockData(symbol, yf) {
 
 // ── State ──────────────────────────────────────────────────────────
 const MA_PERIODS = [20, 40, 60, 120, 200];
+// TPEX/OTC stocks use the .TWO suffix on Yahoo
+const OTC_SYMBOLS = new Set(['6643', '3357', '8155', '3693', '5289']);
+function yahooQuoteUrl(s) {
+  const sym = String(s.symbol || '');
+  const full = (s && s.yahooSym && String(s.yahooSym).match(/\.TW|\.TWO$/))
+    ? s.yahooSym
+    : sym + (OTC_SYMBOLS.has(sym) ? '.TWO' : '.TW');
+  return 'https://finance.yahoo.com/quote/' + encodeURIComponent(full) + '/';
+}
 let watchlistSymbols = [];          // ordered array of symbols
 let liveStocks = {};                // symbol -> parsedStockData (watchlist)
 let favoritesSnapshots = {};        // symbol -> full snapshot (favorites)
@@ -716,6 +726,7 @@ function renderCard(s, isFav=false) {
         <span class="stock-role">${s.role || s.industry || ''}</span>
       </div>
       <div class="card-actions">
+        <a class="ext-link" href="${yahooQuoteUrl(s)}" target="_blank" rel="noopener noreferrer" title="Open Yahoo Finance page" aria-label="Open Yahoo Finance page">&#8599;</a>
         <button class="fav-btn ${isFav?'active':''}" onclick="toggleFavorite('${s.symbol}')" aria-label="Toggle favorite">&#9733;</button>
         <button class="cat-btn" onclick="openCatPicker('${s.symbol}')" title="Categorize">分類</button>
         ${isFav

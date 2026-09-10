@@ -1,4 +1,4 @@
-const CACHE = 'twstocks-v16';
+const CACHE = 'twstocks-v17';
 const SHELL = [
   './',
   'index.html',
