@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "deploy:worker": "wrangler deploy worker/index.js --name easycut-data-proxy --config worker/wrangler.toml"
+    "deploy:worker": "wrangler deploy --config worker/wrangler.toml",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "cors": "^2.8.5",
