@@ -639,7 +639,7 @@ function renderFavorites() {
     return;
   }
   el.innerHTML = Array.from(favoritesSet)
-    .map(s => renderCard(favoritesSnapshots[s] || liveStocks[s] || { symbol: s }, true))
+    .map(s => renderCard(liveStocks[s] || favoritesSnapshots[s] || { symbol: s }, true))
     .join('');
 }
 
