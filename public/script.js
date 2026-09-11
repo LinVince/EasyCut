@@ -999,6 +999,80 @@ async function importBackup(e) {
   }
 })();
 
+// ── AI Insights (Workers AI) ───────────────────────────────────────
+const AI_ENDPOINT = (window.YF_PROXY ? window.YF_PROXY.replace(/\/+$/, '') : '') + '/api/ai-summary';
+
+function buildAiWatchlist() {
+  return Object.values(liveStocks)
+    .filter(s => s.price != null)
+    .map(s => ({
+      symbol: s.symbol,
+      name: s.name_zh || s.symbol,
+      price: s.price,
+      changePct: s.changePct,
+      maVs: s.maVs,
+      wk52Low: s.wk52Low,
+      wk52High: s.wk52High,
+      volume: s.volume,
+      divYield: s.divYield,
+    }));
+}
+
+function mdToHtml(md) {
+  return String(md)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .split('\n')
+    .map(line => {
+      const l = line.trim();
+      if (!l) return '';
+      if (/^#{1,3}\s/.test(l)) return `<h4>${l.replace(/^#+\s*/, '')}</h4>`;
+      if (/^[-*]\s/.test(l)) return `<div class="ai-li">•&nbsp;${mdInline(l.replace(/^[-*]\s*/, ''))}</div>`;
+      return `<div class="ai-line">${mdInline(l)}</div>`;
+    })
+    .filter(Boolean)
+    .join('');
+}
+
+function mdInline(s) {
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\*([^*]+)\*/g, '<i>$1</i>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+async function runAiAnalysis() {
+  const list = buildAiWatchlist();
+  const out = document.getElementById('aiResult');
+  if (!list.length) {
+    out.innerHTML = '<p class="empty-state">Fetch live data first (Refresh), then run the analysis.</p>';
+    return;
+  }
+  const btn = document.querySelector('.ai-run');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  out.innerHTML = '<div class="ai-loading">Workers AI is scanning your watchlist…</div>';
+  try {
+    const r = await fetch(AI_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        watchlist: list,
+        focus: `MA proximity screener (threshold ${thresholdPct}%)`,
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    out.innerHTML = `
+      <div class="ai-ts">${j.cached ? 'Cached result' : 'Fresh reply'} · ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} · <span class="ai-disclaimer">observations only, not advice</span></div>
+      ${mdToHtml(j.text)}`;
+  } catch (err) {
+    out.innerHTML = `<p class="ai-error">AI scan failed: ${err.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run AI Analysis';
+  }
+}
+
 // ── Stock Detail View ──────────────────────────────────────────────
 const RANGE_PRESETS = {
   '1d':  { interval: '1m',  candle: false },

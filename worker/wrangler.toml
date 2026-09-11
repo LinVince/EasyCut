@@ -2,6 +2,9 @@ name = "tw-stocks"
 main = "index.js"
 compatibility_date = "2024-11-01"
 
+[ai]
+binding = "AI"
+
 [assets]
 directory = "../public"
 binding = "ASSETS"
