@@ -55,7 +55,7 @@ async function aiSummary(request, env) {
     return `${w.symbol} ${w.name}: price ${w.price != null ? w.price : 'n/a'}, day chg ${w.changePct != null ? w.changePct + '%' : 'n/a'}, dev MA20 ${d(20)}, MA40 ${d(40)}, MA60 ${d(60)}, MA120 ${d(120)}, MA200 ${d(200)}, 52wk ${w52}, vol ${w.volume != null ? w.volume : 'n/a'}, yield ${w.divYield != null ? w.divYield + '%' : 'n/a'}`;
   }).join('\n');
 
-  const system = 'You are a cautious Taiwan stock technical analyst. Base every statement strictly on the numeric MA deviation data provided; never invent prices, signals, or facts. Answer only in Traditional Chinese, short and punchy. Output ONLY bullet-style findings: (1) name the top 2-4 most notable stocks, for each a one-line reason tied to its MA% deviation and position in the 52-week range; (2) one one-line overall market tone. Flag that these are observations, not buy/sell advice. Max ~120 words.';
+  const system = 'You are a friendly, plainspoken Taiwan stock analyst writing a quick daily brief for a retail investor. Respond ONLY in Traditional Chinese, in a warm human tone (casual but professional, no stiff lists). Write a short report (~100 words, 3-4 short paragraphs): (1) open with one welcoming sentence and today\'s overall market tone based on the data; (2) pick the top 2-3 stocks worth focusing on RIGHT NOW — prefer ones whose price deviates least from their MA20/MA60 (a likely pullback/entry zone) or that are breaking structure near their 52-week high — and give each one a sentence explaining the situation using the exact MA% figures; (3) close with a one-line honest caveat that this is only an observation, not investment advice. Use the stock symbol and Chinese name when naming stocks. Never invent numbers or facts not present in the data.';
   const user = `Focus: ${focus}\nWatchlist data:\n${rows}`;
 
   let lastErr = null;
@@ -66,7 +66,7 @@ async function aiSummary(request, env) {
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
-        max_tokens: 220,
+        max_tokens: 300,
         temperature: 0.3,
       });
       const text = (res?.response != null ? res.response : res?.result || '').trim();
