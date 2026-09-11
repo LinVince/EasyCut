@@ -5,4 +5,4 @@
 //   window.YF_PROXY = 'https://easycut-data-proxy.<your-account>.workers.dev';
 //
 // Leave it as '' to use the local Node server at /api/chart during development.
-window.YF_PROXY = '';
+window.YF_PROXY = 'https://tw-stocks.vincetwstocks.workers.dev';

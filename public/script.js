@@ -384,9 +384,8 @@ async function refreshAll() {
     }
   });
 
-  // Keep symbols that returned data; leave the rest for next pass
-  watchlistSymbols = watchlistSymbols.filter(s => got.has(s));
-
+  // Never drop symbols on transient fetch failures — cards render with
+  // fallback data until live data is available.
   isLoading = false;
   renderAll();
   document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false });
